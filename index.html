@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#5a160e">
+  <meta name="description" content="Order Swahili favourites, pilau, biriani, snacks and fresh drinks from Buxton Bites. Order easily on WhatsApp.">
+  <title>Buxton Bites | Good Food, Good Mood</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="topbar"><span>🍽️ Freshly prepared, full of flavour</span><span>📍 Buxton, Mombasa</span><a href="https://wa.me/254791511386">WhatsApp orders: 0791 511386</a><a href="tel:+254759014745">📞 Call: 0759 014745</a></div>
+  <header class="site-header">
+    <a class="brand" href="#" aria-label="Buxton Bites home"><img src="assets/buxton-bites-logo.png" alt="Buxton Bites logo"><span><b>BUXTON BITES</b><small>GOOD FOOD. GOOD MOOD.</small></span></a>
+    <nav><a href="#menu">Menu</a><a href="#how-it-works">How to order</a><a href="#delivery">Delivery</a><a href="#payments">Payments</a></nav>
+    <button class="cart-button" id="open-cart" aria-label="Open shopping cart">🛍️ <span>My order</span><b id="cart-count">0</b></button>
+  </header>
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow"><span></span> MADE WITH LOVE IN MOMBASA</span>
+        <h1>Big flavour.<br><em>Buxton style.</em></h1>
+        <p>From coastal breakfast bites to comforting biriani and signature pilau — your next favourite meal is just a WhatsApp message away.</p>
+        <div class="hero-actions"><a class="btn btn-primary" href="#menu">Explore the menu <span>↘</span></a><a class="btn btn-light" href="https://wa.me/254791511386">Chat to order ↗</a></div>
+        <div class="hero-note"><span class="note-icon">✦</span><div><b>Special meal?</b><small>We also prepare special meals on request. Please order in advance.</small></div></div>
+      </div>
+      <div class="hero-visual"><div class="hero-image"></div><div class="floating-card"><span>🌶️</span><div><b>Coastal goodness</b><small>Made fresh for you</small></div></div><div class="round-stamp">GOOD<br>FOOD<br><span>♥</span></div></div>
+    </section>
+    <section class="benefits" aria-label="Why order from us"><div><span>🥘</span><b>Coastal favourites</b><small>Local flavour, made with care</small></div><div><span>💬</span><b>Easy WhatsApp orders</b><small>Review your order before sending</small></div><div><span>💳</span><b>Simple payment</b><small>M-Pesa Till or confirm with us</small></div><div><span>✨</span><b>Special requests</b><small>Arrange ahead of time</small></div></section>
+    <section class="menu-section" id="menu">
+      <div class="section-heading"><div><span class="eyebrow">WHAT ARE YOU CRAVING?</span><h2>Good food, <em>your way.</em></h2><p>Browse the menu and add your favourites to your order.</p></div><label class="search"><span>⌕</span><input id="search" type="search" placeholder="Search the menu..." aria-label="Search menu"></label></div>
+      <div class="category-tabs" id="category-tabs">
+        <button class="active" data-category="All">All items</button><button data-category="Breakfast">Breakfast</button><button data-category="Hot Drinks">Hot drinks</button><button data-category="Cold Drinks">Cold drinks</button><button data-category="Lunch / Dinner">Lunch & dinner</button>
+      </div>
+      <div class="menu-meta"><span id="results-label">Our menu</span><span>All prices in <b>KSh</b></span></div>
+      <div class="product-grid" id="product-grid"></div>
+      <div class="empty-state" id="empty-state" hidden>No items found. Try another search or category.</div>
+    </section>
+    <section class="promo"><div class="promo-mark">BB</div><div><span class="eyebrow">A LITTLE SOMETHING EXTRA</span><h2>Planning a special meal?</h2><p>Tell us what you have in mind. Special meals are available on request — please place your order in advance.</p></div><a class="btn btn-primary" href="https://wa.me/254791511386?text=Hello%20Buxton%20Bites%2C%20I%27d%20like%20to%20ask%20about%20a%20special%20meal.">Ask us on WhatsApp ↗</a></section>
+    <section class="how-section" id="how-it-works"><div class="section-heading centered"><span class="eyebrow">EASY AS 1, 2, 3</span><h2>How ordering <em>works</em></h2></div><div class="steps"><article><span>01</span><div class="step-icon">🍛</div><h3>Choose your food</h3><p>Browse the menu and add dishes to your order.</p></article><article><span>02</span><div class="step-icon">🧾</div><h3>Review your basket</h3><p>Enter your details and choose collection or delivery.</p></article><article><span>03</span><div class="step-icon">💬</div><h3>Send on WhatsApp</h3><p>Your order summary opens in WhatsApp for confirmation.</p></article></div></section>
+    <section class="delivery-section" id="delivery"><div class="section-heading centered"><span class="eyebrow">WE DELIVER ACROSS MOMBASA</span><h2>Delivery <em>zones</em></h2><p>Choose your area at checkout. Standard delivery fees are shown for each area. We'll confirm the final fee on WhatsApp before dispatch.</p></div><div class="zone-grid" id="zone-grid"></div><p class="zone-note">Don't see your area? Message us on <a href="https://wa.me/254791511386">WhatsApp</a> and we'll let you know if we can reach you.</p></section>
+    <section class="payment-section" id="payments"><div><span class="eyebrow">PAYMENT DETAILS</span><h2>Pay with confidence.</h2><p>Choose your preferred method in checkout. Confirm any delivery fee and payment details with Buxton Bites before sending payment.</p></div><div class="payment-card"><div class="mpesa-icon"><img src="assets/mpesa-logo.png" alt="M-Pesa logo"></div><div><b>M-Pesa Till Number</b><strong>1817896</strong><small>Use the till number above, then share your payment confirmation when requested.</small></div><button id="copy-till" class="copy-button">Copy till</button></div><div class="payment-card"><div class="mpesa-icon alt">↔</div><div><b>Other payment options</b><strong>Ask us on WhatsApp</strong><small>Confirm cash / other arrangements directly with the restaurant.</small></div></div></section>
+  </main>
+  <footer><div class="footer-main"><a class="brand footer-brand" href="#"><img src="assets/buxton-bites-logo.png" alt=""><span><b>BUXTON BITES</b><small>GOOD FOOD. GOOD MOOD.</small></span></a><p>Coastal favourites, comforting classics and good food made with care.</p><div class="footer-contact"><b>Ready to order?</b><a href="https://wa.me/254791511386">WhatsApp 0791 511386 ↗</a><a href="tel:+254759014745">Call 0759 014745</a><span>Buxton, Mombasa, Kenya</span></div></div><div class="footer-bottom"><span>© <span id="year"></span> Buxton Bites</span><span>Good food. Good mood. ♥</span><a href="#menu">Back to menu ↑</a></div></footer>
+  <div class="overlay" id="overlay"></div>
+  <aside class="cart-drawer" id="cart-drawer" aria-label="Your order" aria-hidden="true"><div class="drawer-head"><div><span class="eyebrow">YOUR SELECTION</span><h2>Your order <span id="drawer-count">(0)</span></h2></div><button id="close-cart" class="icon-button" aria-label="Close cart">✕</button></div><div id="cart-items" class="cart-items"></div><div id="cart-empty" class="cart-empty"><div>🛍️</div><h3>Your basket is hungry</h3><p>Add a few favourites from the menu to get started.</p><button class="btn btn-primary" id="browse-menu">Browse menu</button></div><div class="cart-bottom" id="cart-bottom"><div class="subtotal"><span>Subtotal</span><b id="cart-subtotal">KSh 0</b></div><small>Delivery fee, if applicable, will be confirmed by the restaurant.</small><button class="btn btn-primary checkout-btn" id="go-checkout">Continue to checkout →</button></div></aside>
+  <div class="modal-wrap" id="checkout-modal" role="dialog" aria-modal="true" aria-labelledby="checkout-title" hidden><div class="checkout-modal"><div class="modal-head"><div><span class="eyebrow">ONE LAST THING</span><h2 id="checkout-title">Checkout details</h2><p>We'll prepare a WhatsApp message with your order.</p></div><button class="icon-button" id="close-checkout" aria-label="Close checkout">✕</button></div><form id="checkout-form"><label>Your name<input name="customerName" required placeholder="e.g. Amina Hassan" autocomplete="name"></label><div class="form-row"><label>Phone number<input name="phone" type="tel" required placeholder="07XX XXX XXX" autocomplete="tel"></label><label>Order type<select name="orderType" id="order-type"><option value="Delivery">Delivery</option><option value="Pickup">Pickup / collection</option></select></label></div><label id="zone-label">Delivery zone<select name="zone" id="zone" required></select></label><label id="address-label">Delivery location / address<input name="address" id="address" required placeholder="Estate, building, landmark"></label><div class="form-row"><label>Payment method<select name="payment" required><option value="M-Pesa Till 1817896">M-Pesa Till (1817896)</option><option value="Cash / other — confirm on WhatsApp">Cash / other (confirm on WhatsApp)</option></select></label><label>Preferred time<select name="time"><option>As soon as possible</option><option>Schedule for later — discuss on WhatsApp</option></select></label></div><label>Order notes <span class="optional">(optional)</span><textarea name="notes" rows="2" placeholder="Spice preference, directions, special request..."></textarea></label><div class="checkout-total"><span>Food subtotal</span><b id="checkout-subtotal">KSh 0</b></div><div class="checkout-total fee-row"><span>Delivery fee</span><b id="checkout-delivery">Confirmed on WhatsApp</b></div><div class="checkout-total" id="total-row" hidden><span>Estimated total</span><b id="checkout-total">KSh 0</b></div><p class="form-hint">No online payment is taken here. Confirm availability, delivery fee and final total with Buxton Bites on WhatsApp.</p><button type="submit" class="btn btn-primary submit-order">Send order to WhatsApp ↗</button></form></div></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <a class="wa-float" href="https://wa.me/254791511386" target="_blank" rel="noopener" aria-label="Order on WhatsApp"><img src="assets/whatsapp-logo.png" alt="WhatsApp"></a>
+  <script src="app.js"></script>
+</body></html>
