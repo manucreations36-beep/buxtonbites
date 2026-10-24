@@ -104,7 +104,7 @@ document.addEventListener("click",e=>{
   const add=e.target.closest("[data-add]");if(add){const id=add.dataset.add;cart.set(id,(cart.get(id)||0)+1);renderCart();toast("Added to your order");return}
   const qty=e.target.closest("[data-qty]");if(qty){const id=qty.dataset.qty,next=(cart.get(id)||0)+Number(qty.dataset.delta);if(next<=0)cart.delete(id);else cart.set(id,next);renderCart();return}
   const remove=e.target.closest("[data-remove]");if(remove){cart.delete(remove.dataset.remove);renderCart();return}
-  const tab=e.target.closest("[data-category]");if(tab){activeCategory=tab.dataset.category;document.querySelectorAll("[data-category]").forEach(b=>b.classList.toggle("active",b===tab));renderProducts()}
+  const tab=e.target.closest("[data-category]");if(tab){activeCategory=tab.dataset.category;document.querySelectorAll("[data-category]").forEach(b=>b.classList.toggle("active",b.dataset.category===activeCategory));renderProducts()}
 });
 $("search").addEventListener("input",renderProducts);
 $("open-cart").addEventListener("click",openCart);$("close-cart").addEventListener("click",closeCart);$("overlay").addEventListener("click",closeCart);
@@ -123,7 +123,7 @@ const when=new Date();when.setDate(when.getDate()+dv);const[hh,mm]=clock.split("
 if(when.getTime()<Date.now()+MIN_LEAD_MINUTES*60000){toast(`Please choose a time at least ${MIN_LEAD_MINUTES} minutes from now.`);$("time-clock").focus();return}
 time=`${dayLabel(dv)} at ${fmtTime(hh,mm)}`}const notes=String(form.get("notes")||"").trim();const zone=String(form.get("zone")||"");const zfee=DELIVERY_FEES[zone];const code=String(form.get("mpesaCode")||"").trim().toUpperCase();const isMp=String(payment).startsWith("M-Pesa");
  const lines=[`Hello Buxton Bites! I'd like to place an order.`,``,`*CUSTOMER DETAILS*`,`Name: ${name}`,`Phone: ${phone}`,`Order type: ${type}`];if(type!=="Pickup"&&zone)lines.push(`Delivery zone: ${zone}`);if(address)lines.push(`${type==="Pickup"?"Pickup note":"Delivery address"}: ${address}`);
- lines.push(`${type==="Pickup"?"Pickup":"Delivery"} time: ${time}`,``,`*MY ORDER*`);cart.forEach((qty,id)=>{const p=products.find(x=>x.id===id);lines.push(`• ${p.name} x${qty} — ${money(p.price*qty)}`)});lines.push(``,`*Food subtotal: ${money(subtotal())}*`,...(type!=="Pickup"&&typeof zfee==="number"?[`Delivery fee: ${money(zfee)}`,`*Estimated total: ${money(subtotal()+zfee)}*`]:[]),`Payment method: ${payment}`,...(isMp?[`M-Pesa Till: 1817896`,code?`*M-Pesa code: ${code}*`:`M-Pesa code: (to follow — delivery fee to be confirmed)`,`⚠️ Please verify this code against the Till before preparing/delivering.`]:[]));if(notes)lines.push(`Order notes: ${notes}`);lines.push(``,`Please confirm availability and final total. Thank you!`);
+ lines.push(`${type==="Pickup"?"Pickup":"Delivery"} time: ${time}`,``,`*MY ORDER*`);cart.forEach((qty,id)=>{const p=products.find(x=>x.id===id);lines.push(`• ${p.name} x${qty} — ${money(p.price*qty)}`)});lines.push(``,`*Food subtotal: ${money(subtotal())}*`,...(type!=="Pickup"&&typeof zfee==="number"?[`Delivery fee: ${money(zfee)}`,`*Estimated total: ${money(subtotal()+zfee)}*`]:[]),`Payment method: ${payment}`,...(isMp?[code?`*M-Pesa code: ${code}*`:`M-Pesa code: (to follow — delivery fee to be confirmed)`,`⚠️ Please verify this code against the Till before preparing/delivering.`]:[]));if(notes)lines.push(`Order notes: ${notes}`);lines.push(``,`Please confirm availability and final total. Thank you!`);
  if($("remember").checked)CustomerDB.set({name,phone,orderType:type,zone,address,payment});else CustomerDB.clear();
  const url=`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join("\n"))}`;window.open(url,"_blank","noopener,noreferrer");$("checkout-modal").hidden=true;document.body.classList.remove("no-scroll");
 });
@@ -170,16 +170,13 @@ $("m-popular").innerHTML=pop.map(([id,tag],i)=>{const p=products.find(x=>x.id===
 $("m-popular").addEventListener("click",e=>{const f=e.target.closest("[data-fav]");if(!f)return;f.classList.toggle("on");const id=f.dataset.fav;favs=f.classList.contains("on")?[...new Set([...favs,id])]:favs.filter(x=>x!==id);try{localStorage.setItem("bb-favs",JSON.stringify(favs))}catch{}});
 // header actions
 $("m-cart-btn").onclick=()=>$("open-cart").click();$("m-nav-order").onclick=()=>$("open-cart").click();
-const toMenu=()=>$("menu").scrollIntoView({behavior:"smooth"});
+const toMenu=()=>goView("menu");
 $("m-filter").onclick=toMenu;
-$("m-cats").addEventListener("click",e=>{const b=e.target.closest("[data-category]");if(b&&b.dataset.category!=="All")setTimeout(toMenu,60)});
-let t;$("m-search").addEventListener("input",e=>{$("search").value=e.target.value;renderProducts();clearTimeout(t);if(e.target.value.trim())t=setTimeout(toMenu,500)});
+$("m-cats").addEventListener("click",e=>{if(e.target.closest("[data-category]"))setTimeout(toMenu,80)});
+$("m-search").addEventListener("focus",e=>{goView("menu");setTimeout(()=>{$("search").focus()},30);e.target.blur()});
 // sheet
 const sh=$("m-sheet");const open=v=>{sh.hidden=!v};$("m-menu-btn").onclick=()=>open(true);$("m-sheet-bg").onclick=()=>open(false);sh.addEventListener("click",e=>{if(e.target.closest("a"))open(false)});
-// scroll spy
-const spy=[...document.querySelectorAll("[data-spy]")];const tg={top:document.body,menu:$("menu"),delivery:$("delivery")};
-function onScroll(){const y=scrollY+window.innerHeight*.4;let k="top";if(y>=tg.menu.offsetTop)k="menu";if(y>=tg.delivery.offsetTop)k="delivery";spy.forEach(x=>x.classList.toggle("active",x.dataset.spy===k))}
-addEventListener("scroll",onScroll,{passive:true});onScroll();
+
 })();
 
 (function(){const sel=$("time-date"),clock=$("time-clock"),mode=$("time-mode"),pick=$("time-pick"),hint=$("time-hint");
@@ -210,3 +207,50 @@ $("clear-saved").addEventListener("click",async()=>{await CustomerDB.clear();con
 (function(){const s=$("splash");if(!s)return;let done=false;
 function hide(){if(done)return;done=true;try{sessionStorage.setItem("bb-splash","1")}catch{}s.classList.add("out");document.documentElement.classList.remove("splash-on");setTimeout(()=>s.remove(),600)}
 setTimeout(hide,2600);s.addEventListener("click",hide)})();
+
+/* ===== Mobile app router (phones): Home / Menu / Delivery / Payments / How to order ===== */
+const VIEW_TITLES={menu:"Our Menu",delivery:"Delivery zones",payments:"Payments",how:"How to order"};
+const HASH_VIEW={"#menu":"menu","#delivery":"delivery","#payments":"payments","#how-it-works":"how","#top":"home"};
+const isPhone=()=>matchMedia("(max-width:700px)").matches;
+function showView(v){if(!["home","menu","delivery","payments","how"].includes(v))v="home";document.body.dataset.view=v;
+ if(VIEW_TITLES[v])$("m-pagetitle").textContent=VIEW_TITLES[v];
+ document.querySelectorAll("[data-spy]").forEach(x=>x.classList.toggle("active",x.dataset.spy===(v==="home"?"top":v)));
+ window.scrollTo(0,0)}
+function goView(v){if(!isPhone())return;if(location.hash==="#page-"+v)showView(v);else location.hash="page-"+v}
+addEventListener("hashchange",()=>{if(!isPhone())return;showView((location.hash.match(/^#page-(\w+)/)||[])[1]||"home")});
+document.addEventListener("click",e=>{const a=e.target.closest('a[href^="#"]');if(!a||!isPhone())return;const v=HASH_VIEW[a.getAttribute("href")];if(!v)return;e.preventDefault();goView(v)});
+$("m-back").onclick=()=>goView("home");$("m-pagecart").onclick=()=>$("open-cart").click();
+if(isPhone())showView((location.hash.match(/^#page-(\w+)/)||[])[1]||"home");
+
+/* ===== PWA: service worker + install prompts ===== */
+(function(){
+if("serviceWorker"in navigator&&(location.protocol==="https:"||location.hostname==="localhost"||location.hostname==="127.0.0.1")){
+ addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").then(reg=>{
+  const urls=[...new Set(products.map(p=>p.image).concat(HERO_SLIDES.map(s=>s.img)))];
+  const send=()=>{const w=reg.active||navigator.serviceWorker.controller;if(w)w.postMessage({type:"precache",urls})};
+  (window.requestIdleCallback||setTimeout)(()=>navigator.serviceWorker.ready.then(send),3000);
+  reg.addEventListener("updatefound",()=>{const n=reg.installing;n&&n.addEventListener("statechange",()=>{if(n.state==="installed"&&navigator.serviceWorker.controller)toast("Update ready — reopen the app to get the latest menu")})});
+ }).catch(()=>{})});
+}
+const standalone=()=>matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+if(standalone()){document.documentElement.classList.add("is-app");return}
+const ua=navigator.userAgent,isIOS=/iphone|ipad|ipod/i.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const iosSafari=isIOS&&/safari/i.test(ua)&&!/crios|fxios|edgios|opios/i.test(ua);
+let deferred=null;const banner=$("install-banner"),sheetItem=$("sheet-install");
+const key="bb-install-dismissed";
+const dismissed=()=>{try{const t=+localStorage.getItem(key);return t&&Date.now()-t<7*864e5}catch{return false}};
+function showBanner(){if(dismissed()||standalone()||!isPhone())return;banner.hidden=false}
+function hideBanner(remember){banner.hidden=true;if(remember){try{localStorage.setItem(key,String(Date.now()))}catch{}}}
+async function install(){
+ if(deferred){deferred.prompt();const r=await deferred.userChoice.catch(()=>({}));deferred=null;hideBanner(r.outcome!=="accepted");sheetItem.hidden=true;return}
+ if(isIOS){$("ios-note").hidden=iosSafari;$("ios-help").hidden=false;hideBanner(false);return}
+ toast("Open your browser menu and choose “Install app” or “Add to Home screen”.");
+}
+addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferred=e;sheetItem.hidden=false;setTimeout(showBanner,4000)});
+addEventListener("appinstalled",()=>{deferred=null;hideBanner(false);sheetItem.hidden=true;toast("Buxton Bites installed 🎉")});
+if(isIOS){sheetItem.hidden=false;setTimeout(showBanner,5000)}
+$("install-btn").addEventListener("click",install);
+$("install-close").addEventListener("click",()=>hideBanner(true));
+sheetItem.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();$("m-sheet").hidden=true;install()});
+const closeIos=()=>{$("ios-help").hidden=true};$("ios-ok").addEventListener("click",closeIos);$("ios-bg").addEventListener("click",closeIos);
+})();
