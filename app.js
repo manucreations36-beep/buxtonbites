@@ -65,12 +65,16 @@ const DELIVERY_FEES={
 };
 
 const HERO_SLIDES=[
-{id:"pilau",eyebrow:"MADE WITH LOVE IN MOMBASA",title:"Big flavour.<br><em>Buxton style.</em>",text:"From coastal breakfast bites to comforting biriani and signature pilau — your next favourite meal is just a WhatsApp message away.",img:"assets/lunch-dinner/signature-pilau.jpg",emoji:"🌶️"},
+{id:"pilau",eyebrow:"MADE WITH LOVE IN MOMBASA",title:"Taste<br><em>ya Pwani.</em>",text:"From coastal breakfast bites to comforting biriani and signature pilau — your next favourite meal is just a WhatsApp message away.",img:"assets/lunch-dinner/signature-pilau.jpg",emoji:"🌶️"},
 {id:"mahamri",eyebrow:"COASTAL BREAKFAST",title:"Start the day<br><em>the Swahili way.</em>",text:"Soft, fragrant mahamri, mbahazi and warm bites to kick off your morning.",img:"assets/breakfast/mahamri.jpg",emoji:"🥐"},
 {id:"mutton-mandhi",eyebrow:"LUNCH & DINNER",title:"Rich, aromatic<br><em>mandhi.</em>",text:"Hearty mains, biriani and coconut dishes — made for a proper sit-down meal.",img:"assets/lunch-dinner/mutton-mandhi.jpg",emoji:"🍖"},
 {id:"dawa",eyebrow:"HOT DRINKS",title:"Warm up with<br><em>special dawa.</em>",text:"Spiced teas, milk tea and Arabic coffee to keep you cosy, any time of day.",img:"assets/hot-drinks/special-dawa.jpg",emoji:"☕"},
 {id:"mango",eyebrow:"FRESH & COOL",title:"Cool down,<br><em>coastal style.</em>",text:"Mango, passion, pineapple and more — chilled juices and sodas to pair with any meal.",img:"assets/cold-drinks/mango-juice.jpg",emoji:"🥭"}
 ];
+
+const MIN_LEAD_MINUTES=60; // earliest a same-day exact time can be booked
+const fmtTime=(h,m)=>`${((h+11)%12)+1}:${String(m).padStart(2,"0")} ${h<12?"AM":"PM"}`;
+const dayLabel=n=>{const d=new Date();d.setDate(d.getDate()+n);const s=d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});return n===0?`Today, ${s}`:n===1?`Tomorrow, ${s}`:s};
 const cart = new Map();
 let activeCategory = "All";
 const $ = id => document.getElementById(id);
@@ -113,9 +117,14 @@ $("zone").addEventListener("change",updateDelivery);$("payment").addEventListene
 $("copy-till").addEventListener("click",async()=>{try{await navigator.clipboard.writeText("1817896");toast("Till number copied: 1817896")}catch{toast("M-Pesa Till Number: 1817896")}});
 $("checkout-form").addEventListener("submit",e=>{
  e.preventDefault();if(!cart.size){toast("Add items before checkout");return}
- const form=new FormData(e.currentTarget);const name=String(form.get("customerName")||"").trim();const phone=String(form.get("phone")||"").trim();const type=form.get("orderType");const address=String(form.get("address")||"").trim();const payment=form.get("payment");const time=form.get("time");const notes=String(form.get("notes")||"").trim();const zone=String(form.get("zone")||"");const zfee=DELIVERY_FEES[zone];const code=String(form.get("mpesaCode")||"").trim().toUpperCase();const isMp=String(payment).startsWith("M-Pesa");
+ const form=new FormData(e.currentTarget);const name=String(form.get("customerName")||"").trim();const phone=String(form.get("phone")||"").trim();const type=form.get("orderType");const address=String(form.get("address")||"").trim();const payment=form.get("payment");const timeMode=form.get("time");let time="As soon as possible";
+if(timeMode==="exact"){const clock=String(form.get("clock")||""),dv=Number(form.get("date")||0);if(!clock){toast("Please choose the time you want your order.");$("time-clock").focus();return}
+const when=new Date();when.setDate(when.getDate()+dv);const[hh,mm]=clock.split(":").map(Number);when.setHours(hh,mm,0,0);
+if(when.getTime()<Date.now()+MIN_LEAD_MINUTES*60000){toast(`Please choose a time at least ${MIN_LEAD_MINUTES} minutes from now.`);$("time-clock").focus();return}
+time=`${dayLabel(dv)} at ${fmtTime(hh,mm)}`}const notes=String(form.get("notes")||"").trim();const zone=String(form.get("zone")||"");const zfee=DELIVERY_FEES[zone];const code=String(form.get("mpesaCode")||"").trim().toUpperCase();const isMp=String(payment).startsWith("M-Pesa");
  const lines=[`Hello Buxton Bites! I'd like to place an order.`,``,`*CUSTOMER DETAILS*`,`Name: ${name}`,`Phone: ${phone}`,`Order type: ${type}`];if(type!=="Pickup"&&zone)lines.push(`Delivery zone: ${zone}`);if(address)lines.push(`${type==="Pickup"?"Pickup note":"Delivery address"}: ${address}`);
- lines.push(`Preferred time: ${time}`,``,`*MY ORDER*`);cart.forEach((qty,id)=>{const p=products.find(x=>x.id===id);lines.push(`• ${p.name} x${qty} — ${money(p.price*qty)}`)});lines.push(``,`*Food subtotal: ${money(subtotal())}*`,...(type!=="Pickup"&&typeof zfee==="number"?[`Delivery fee: ${money(zfee)}`,`*Estimated total: ${money(subtotal()+zfee)}*`]:[]),`Payment method: ${payment}`,...(isMp?[`M-Pesa Till: 1817896`,code?`*M-Pesa code: ${code}*`:`M-Pesa code: (to follow — delivery fee to be confirmed)`,`⚠️ Please verify this code against the Till before preparing/delivering.`]:[]));if(notes)lines.push(`Order notes: ${notes}`);lines.push(``,`Please confirm availability and final total. Thank you!`);
+ lines.push(`${type==="Pickup"?"Pickup":"Delivery"} time: ${time}`,``,`*MY ORDER*`);cart.forEach((qty,id)=>{const p=products.find(x=>x.id===id);lines.push(`• ${p.name} x${qty} — ${money(p.price*qty)}`)});lines.push(``,`*Food subtotal: ${money(subtotal())}*`,...(type!=="Pickup"&&typeof zfee==="number"?[`Delivery fee: ${money(zfee)}`,`*Estimated total: ${money(subtotal()+zfee)}*`]:[]),`Payment method: ${payment}`,...(isMp?[`M-Pesa Till: 1817896`,code?`*M-Pesa code: ${code}*`:`M-Pesa code: (to follow — delivery fee to be confirmed)`,`⚠️ Please verify this code against the Till before preparing/delivering.`]:[]));if(notes)lines.push(`Order notes: ${notes}`);lines.push(``,`Please confirm availability and final total. Thank you!`);
+ if($("remember").checked)CustomerDB.set({name,phone,orderType:type,zone,address,payment});else CustomerDB.clear();
  const url=`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join("\n"))}`;window.open(url,"_blank","noopener,noreferrer");$("checkout-modal").hidden=true;document.body.classList.remove("no-scroll");
 });
 $("year").textContent=new Date().getFullYear();
@@ -172,3 +181,32 @@ const spy=[...document.querySelectorAll("[data-spy]")];const tg={top:document.bo
 function onScroll(){const y=scrollY+window.innerHeight*.4;let k="top";if(y>=tg.menu.offsetTop)k="menu";if(y>=tg.delivery.offsetTop)k="delivery";spy.forEach(x=>x.classList.toggle("active",x.dataset.spy===k))}
 addEventListener("scroll",onScroll,{passive:true});onScroll();
 })();
+
+(function(){const sel=$("time-date"),clock=$("time-clock"),mode=$("time-mode"),pick=$("time-pick"),hint=$("time-hint");
+sel.innerHTML=[0,1,2,3,4,5,6].map(n=>`<option value="${n}">${dayLabel(n)}</option>`).join("");
+function sync(){const ex=mode.value==="exact";pick.hidden=!ex;clock.required=ex;
+ if(ex){const today=sel.value==="0";if(today){const t=new Date(Date.now()+MIN_LEAD_MINUTES*60000);const mn=String(t.getHours()).padStart(2,"0")+":"+String(t.getMinutes()).padStart(2,"0");clock.min=mn;hint.textContent=`Same-day orders need at least ${MIN_LEAD_MINUTES} minutes (earliest ${fmtTime(t.getHours(),t.getMinutes())}). We'll confirm the time on WhatsApp.`}else{clock.removeAttribute("min");hint.textContent="We'll confirm your time on WhatsApp. Special meals need advance notice."}}}
+mode.addEventListener("change",sync);sel.addEventListener("change",sync);
+$("order-type").addEventListener("change",e=>{$("time-label").textContent=e.target.value==="Pickup"?"Pickup time":"Delivery time"});sync()})();
+
+/* ===== IndexedDB: remember customer details on this device ===== */
+const CustomerDB=(()=>{const NAME="buxton-bites",STORE="customer";let dbp;
+function open(){if(dbp)return dbp;dbp=new Promise((res,rej)=>{if(!("indexedDB"in window))return rej(new Error("no idb"));const r=indexedDB.open(NAME,1);r.onupgradeneeded=()=>r.result.createObjectStore(STORE);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});return dbp}
+async function tx(mode,fn){try{const db=await open();return await new Promise((res,rej)=>{const t=db.transaction(STORE,mode),req=fn(t.objectStore(STORE));t.oncomplete=()=>res(req&&req.result);t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error)})}catch(e){return null}}
+return{get:()=>tx("readonly",s=>s.get("profile")),set:v=>tx("readwrite",s=>s.put({...v,savedAt:Date.now()},"profile")),clear:()=>tx("readwrite",s=>s.delete("profile"))}})();
+async function fillSaved(){const p=await CustomerDB.get();if(!p||!p.name)return;
+ const f=$("checkout-form"),set=(n,v)=>{const el=f.elements[n];if(el&&v&&!String(el.value).trim())el.value=v};
+ set("customerName",p.name);set("phone",p.phone);set("address",p.address);
+ if(p.orderType&&f.elements.orderType.value!==p.orderType){f.elements.orderType.value=p.orderType;f.elements.orderType.dispatchEvent(new Event("change"))}
+ if(p.zone&&!f.elements.zone.value&&[...f.elements.zone.options].some(o=>o.value===p.zone))f.elements.zone.value=p.zone;
+ if(p.payment&&[...f.elements.payment.options].some(o=>o.value===p.payment||o.text===p.payment))f.elements.payment.value=p.payment;
+ f.elements.zone.dispatchEvent(new Event("change"));
+ $("saved-name").textContent=p.name.split(" ")[0];$("saved-note").hidden=false;$("remember").checked=true}
+CustomerDB.get().then(p=>{if(p&&p.name){const g=$("m-greet");if(g)g.textContent=g.textContent.replace("!",", "+p.name.split(" ")[0]+"!")}});
+$("go-checkout").addEventListener("click",()=>{fillSaved()});
+$("clear-saved").addEventListener("click",async()=>{await CustomerDB.clear();const f=$("checkout-form");["customerName","phone","address"].forEach(n=>f.elements[n].value="");f.elements.zone.value="";f.elements.zone.dispatchEvent(new Event("change"));$("saved-note").hidden=true;toast("Saved details cleared from this device")});
+
+/* ===== Phone splash screen ===== */
+(function(){const s=$("splash");if(!s)return;let done=false;
+function hide(){if(done)return;done=true;try{sessionStorage.setItem("bb-splash","1")}catch{}s.classList.add("out");document.documentElement.classList.remove("splash-on");setTimeout(()=>s.remove(),600)}
+setTimeout(hide,2600);s.addEventListener("click",hide)})();
