@@ -32,3 +32,9 @@ Zones are listed in `DELIVERY_ZONES` at the top of `app.js` (shown on the site a
 - Upload the whole folder so `manifest.webmanifest`, `sw.js` and `index.html` sit in the same directory.
 - Android/Chrome: an "Install Buxton Bites" banner appears (also in the ☰ menu). iPhone/Safari: the banner opens an "Add to Home Screen" guide.
 - After changing any site file, edit `VERSION` at the top of `sw.js` (e.g. `bb-v2`) so phones pick up the update. Customers then see a "New version available — Reload" banner (their basket is kept when they tap Reload). Phones check for updates when the app is opened, every 30 minutes, and when they come back online.
+
+## Map pin (OpenStreetMap)
+- Delivery orders ask the customer to pin their exact location (`map.js`). It uses OpenStreetMap tiles and Nominatim search; no API key is needed. The "© OpenStreetMap contributors" credit must stay visible.
+- The pin is sent in the WhatsApp message as an OpenStreetMap link plus a Google Maps "Navigate" link for the rider, and is remembered on the customer's device with their other saved details.
+- To make the pin optional, set `PIN_REQUIRED=false` near the top of `app.js`. It is skipped automatically when the phone is offline.
+- OpenStreetMap's public servers are for light use. If order volume grows a lot, switch `TILE`/`NOMINATIM` in `map.js` to a paid provider (e.g. MapTiler, Stadia) — only those two constants change.
