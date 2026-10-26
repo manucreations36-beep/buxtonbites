@@ -1,6 +1,6 @@
 category,item,file,credit,source_url
 Breakfast,Mahamri,breakfast\mahamri.jpg,www.youtube.com,https://www.youtube.com/watch?v=xX8gKA0HRpY
-Breakfast,Mitai,breakfast\mitai.jpg,mealsnrecipes.com,https://mealsnrecipes.com/easy-fluffy-glazed-fried-dough-bites/
+Breakfast,Mitai,breakfast\mitai.jpg,supplied by client,
 Breakfast,Viazi karai,breakfast\viazi-karai.jpg,dreamstime.com,https://www.dreamstime.com/royalty-free-stock-photography-indian-fried-potato-image23925637
 Breakfast,Mbahazi nazi,breakfast\mbahazi-nazi.jpg,supplied by client,
 Breakfast,Bajia,breakfast\bajia.jpg,chefspencil.com,https://www.chefspencil.com/kenyan-bhajia-potato-fritters/
@@ -10,14 +10,15 @@ Breakfast,Veg sambusa,breakfast\veg-sambusa.jpg,theenglishkitchen.co,https://www
 Breakfast,Kebab,breakfast\kebab.jpg,storage.googleapis.com,https://storage.googleapis.com/dtdvexlssqcjte/what-is-a-kebab-plate.html
 Breakfast,Chapati,breakfast\chapati.jpg,,https://www.chefspencil.com/kenyan-chapati-flatbread/
 Breakfast,Kienyeji chicken soup,breakfast\kienyeji-chicken-soup.jpg,www.delish.com,https://www.delish.com/cooking/recipe-ideas/a44475588/chicken-soup-recipe/
-Breakfast,Paya soup,breakfast\paya-soup.jpg,gettyimages.com,https://www.gettyimages.com/detail/photo/chengdu-pork-trotters-soup-royalty-free-image/2089325632
+Breakfast,Paya soup,breakfast\paya-soup.jpg,supplied by client,
 Hot Drinks,Special milk tea (single),hot-drinks\special-milk-tea-single.jpg,supplied by client,
 Hot Drinks,Special milk tea (teapot),hot-drinks\special-milk-tea-teapot.jpg,supplied by client,
-Hot Drinks,Black masala tea,hot-drinks\black-masala-tea.jpg,recipes.net,https://recipes.net/articles/how-to-drink-masala-tea/
+Hot Drinks,Black masala tea (single),hot-drinks\black-masala-tea-single.jpg,supplied by client,
+Hot Drinks,Black masala tea (teapot),hot-drinks\black-masala-tea-teapot.jpg,supplied by client,
 Hot Drinks,Special dawa,hot-drinks\special-dawa.jpg,supplied by client,
 Hot Drinks,Arabic coffee,hot-drinks\arabic-coffee.jpg,,https://www.dreamstime.com/bowl-arabic-coffee-cardamom-dates-side-generative-ai-bowl-arabic-coffee-cardamom-dates-side-image342004427
 Cold Drinks,Tamarind juice,cold-drinks\tamarind-juice.jpg,,https://fity.club/lists/suggestions/tamarind-fruit-juice/
-Cold Drinks,Orange juice,cold-drinks\orange-juice.jpg,,https://storage.googleapis.com/daamguehkpvmme/orange-bird-juice-glasses.html
+Cold Drinks,Orange juice,cold-drinks\orange-juice.jpg,supplied by client,
 Cold Drinks,Mango juice,cold-drinks\mango-juice.jpg,,https://ar.inspiredpencil.com/pictures-2023/mango-juice-glass-with-mango
 Cold Drinks,Passion juice,cold-drinks\passion-juice.jpg,thelittleepicurean.com,https://www.thelittleepicurean.com/passion-fruit-juice/
 Cold Drinks,Pineapple juice,cold-drinks\pineapple-juice.jpg,,https://www.animalia-life.club/qa/pictures/pineapple-juice-glass.html

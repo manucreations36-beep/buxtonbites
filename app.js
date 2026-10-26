@@ -15,8 +15,8 @@ const products = [
 {id:"paya-soup",name:"Paya soup",price:300,category:"Breakfast",image:"assets/breakfast/paya-soup.jpg",description:"A rich, warming soup."},
 {id:"special-milk-tea-single",name:"Special milk tea, single",price:150,category:"Hot Drinks",image:"assets/hot-drinks/special-milk-tea-single.jpg",description:"A comforting cup of spiced milk tea."},
 {id:"special-milk-tea-teapot",name:"Special milk tea, teapot",price:450,category:"Hot Drinks",image:"assets/hot-drinks/special-milk-tea-teapot.jpg",description:"A teapot to share or savour slowly."},
-{id:"black-masala-single",name:"Black masala tea, single",price:100,category:"Hot Drinks",image:"assets/hot-drinks/black-masala-tea.jpg",description:"Bold black tea with warming masala."},
-{id:"black-masala-teapot",name:"Black masala tea, teapot",price:350,category:"Hot Drinks",image:"assets/hot-drinks/black-masala-tea.jpg",description:"Masala tea served by the teapot."},
+{id:"black-masala-single",name:"Black masala tea, single",price:100,category:"Hot Drinks",image:"assets/hot-drinks/black-masala-tea-single.jpg",description:"Bold black tea with warming masala."},
+{id:"black-masala-teapot",name:"Black masala tea, teapot",price:350,category:"Hot Drinks",image:"assets/hot-drinks/black-masala-tea-teapot.jpg",description:"Masala tea served by the teapot."},
 {id:"dawa",name:"Special dawa",price:300,category:"Hot Drinks",image:"assets/hot-drinks/special-dawa.jpg",description:"A warming, zesty favourite."},
 {id:"arabic-coffee",name:"Arabic coffee",price:350,category:"Hot Drinks",image:"assets/hot-drinks/arabic-coffee.jpg",description:"Fragrant coffee with a distinctive flavour."},
 {id:"tamarind",name:"Tamarind juice",price:150,category:"Cold Drinks",image:"assets/cold-drinks/tamarind-juice.jpg",description:"Sweet, tangy and refreshing."},
@@ -57,6 +57,7 @@ const DELIVERY_ZONES=[
 {group:"South Mainland",areas:["Likoni","Mtongwe","Shelly Beach"]}
 ];
 /* Standard delivery fee (KSh) per area. Edit freely; areas without a fee show "confirmed on WhatsApp". */
+const PIN_REQUIRED=true; // delivery orders must include a map pin (skipped automatically when offline)
 const DELIVERY_FEES={
 "Old Town":150,"Ganjoni":150,"Tudor":150,"Kizingo":150,"Buxton":100,"Makupa":150,"Tononoka":150,"Mbaraki":150,
 "Nyali":250,"Mkomani":250,"Kongowea":250,"Kisauni":300,"Bamburi":300,"Shanzu":400,"Mtwapa":450,
@@ -121,13 +122,14 @@ $("checkout-form").addEventListener("submit",e=>{
 if(timeMode==="exact"){const clock=String(form.get("clock")||""),dv=Number(form.get("date")||0);if(!clock){toast("Please choose the time you want your order.");$("time-clock").focus();return}
 const when=new Date();when.setDate(when.getDate()+dv);const[hh,mm]=clock.split(":").map(Number);when.setHours(hh,mm,0,0);
 if(when.getTime()<Date.now()+MIN_LEAD_MINUTES*60000){toast(`Please choose a time at least ${MIN_LEAD_MINUTES} minutes from now.`);$("time-clock").focus();return}
-time=`${dayLabel(dv)} at ${fmtTime(hh,mm)}`}const notes=String(form.get("notes")||"").trim();const zone=String(form.get("zone")||"");const zfee=DELIVERY_FEES[zone];const code=String(form.get("mpesaCode")||"").trim().toUpperCase();const isMp=String(payment).startsWith("M-Pesa");
- const lines=[`Hello Buxton Bites! I'd like to place an order.`,``,`*CUSTOMER DETAILS*`,`Name: ${name}`,`Phone: ${phone}`,`Order type: ${type}`];if(type!=="Pickup"&&zone)lines.push(`Delivery zone: ${zone}`);if(address)lines.push(`${type==="Pickup"?"Pickup note":"Delivery address"}: ${address}`);
+time=`${dayLabel(dv)} at ${fmtTime(hh,mm)}`}const notes=String(form.get("notes")||"").trim();const zone=String(form.get("zone")||"");const zfee=DELIVERY_FEES[zone];const code=String(form.get("mpesaCode")||"").trim().toUpperCase();const isMp=String(payment).startsWith("M-Pesa");const lat=String(form.get("lat")||""),lng=String(form.get("lng")||"");if(type!=="Pickup"&&PIN_REQUIRED&&navigator.onLine&&!lat){toast("Please pin your delivery location on the map.");$("pin-open").click();return}
+ const lines=[`Hello Buxton Bites! I'd like to place an order.`,``,`*CUSTOMER DETAILS*`,`Name: ${name}`,`Phone: ${phone}`,`Order type: ${type}`];if(type!=="Pickup"&&zone)lines.push(`Delivery zone: ${zone}`);if(type!=="Pickup"&&lat)lines.push(`📍 Pinned location: ${BBMapPicker.osmLink(lat,lng)}`,`🧭 Navigate: ${BBMapPicker.gmapsLink(lat,lng)}`);if(address)lines.push(`${type==="Pickup"?"Pickup note":"Delivery address"}: ${address}`);
  lines.push(`${type==="Pickup"?"Pickup":"Delivery"} time: ${time}`,``,`*MY ORDER*`);cart.forEach((qty,id)=>{const p=products.find(x=>x.id===id);lines.push(`• ${p.name} x${qty} — ${money(p.price*qty)}`)});lines.push(``,`*Food subtotal: ${money(subtotal())}*`,...(type!=="Pickup"&&typeof zfee==="number"?[`Delivery fee: ${money(zfee)}`,`*Estimated total: ${money(subtotal()+zfee)}*`]:[]),`Payment method: ${payment}`,...(isMp?[code?`*M-Pesa code: ${code}*`:`M-Pesa code: (to follow — delivery fee to be confirmed)`,`⚠️ Please verify this code against the Till before preparing/delivering.`]:[]));if(notes)lines.push(`Order notes: ${notes}`);lines.push(``,`Please confirm availability and final total. Thank you!`);
- if($("remember").checked)CustomerDB.set({name,phone,orderType:type,zone,address,payment});else CustomerDB.clear();
+ if($("remember").checked)CustomerDB.set({name,phone,orderType:type,zone,address,payment,lat,lng});else CustomerDB.clear();
  const url=`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join("\n"))}`;window.open(url,"_blank","noopener,noreferrer");$("checkout-modal").hidden=true;document.body.classList.remove("no-scroll");
 });
 $("year").textContent=new Date().getFullYear();
+try{const saved=JSON.parse(sessionStorage.getItem("bb-cart-restore")||"null");if(saved){saved.forEach(([id,q])=>{if(products.some(p=>p.id===id))cart.set(id,q)});sessionStorage.removeItem("bb-cart-restore")}}catch{}
 renderProducts();renderCart();
 (function(){const wrap=$("hero-image"),dots=$("hero-dots");let cur=0,timer;
 wrap.innerHTML=HERO_SLIDES.map((s,i)=>`<div class="hero-slide${i?"":" active"}" style="background-image:url('${s.img}')"></div>`).join("");
@@ -173,6 +175,7 @@ $("m-cart-btn").onclick=()=>$("open-cart").click();$("m-nav-order").onclick=()=>
 const toMenu=()=>goView("menu");
 $("m-filter").onclick=toMenu;
 $("m-cats").addEventListener("click",e=>{if(e.target.closest("[data-category]"))setTimeout(toMenu,80)});
+let ms;$("m-search").addEventListener("input",e=>{if(isPhone())return;$("search").value=e.target.value;renderProducts();clearTimeout(ms);if(e.target.value.trim())ms=setTimeout(()=>$("menu").scrollIntoView({behavior:"smooth"}),500)});
 $("m-search").addEventListener("focus",e=>{goView("menu");setTimeout(()=>{$("search").focus()},30);e.target.blur()});
 // sheet
 const sh=$("m-sheet");const open=v=>{sh.hidden=!v};$("m-menu-btn").onclick=()=>open(true);$("m-sheet-bg").onclick=()=>open(false);sh.addEventListener("click",e=>{if(e.target.closest("a"))open(false)});
@@ -198,10 +201,11 @@ async function fillSaved(){const p=await CustomerDB.get();if(!p||!p.name)return;
  if(p.zone&&!f.elements.zone.value&&[...f.elements.zone.options].some(o=>o.value===p.zone))f.elements.zone.value=p.zone;
  if(p.payment&&[...f.elements.payment.options].some(o=>o.value===p.payment||o.text===p.payment))f.elements.payment.value=p.payment;
  f.elements.zone.dispatchEvent(new Event("change"));
+ if(p.lat&&!$("pin-lat").value)setPin(p.lat,p.lng,"Saved location — tap Change to update");
  $("saved-name").textContent=p.name.split(" ")[0];$("saved-note").hidden=false;$("remember").checked=true}
 CustomerDB.get().then(p=>{if(p&&p.name){const g=$("m-greet");if(g)g.textContent=g.textContent.replace("!",", "+p.name.split(" ")[0]+"!")}});
 $("go-checkout").addEventListener("click",()=>{fillSaved()});
-$("clear-saved").addEventListener("click",async()=>{await CustomerDB.clear();const f=$("checkout-form");["customerName","phone","address"].forEach(n=>f.elements[n].value="");f.elements.zone.value="";f.elements.zone.dispatchEvent(new Event("change"));$("saved-note").hidden=true;toast("Saved details cleared from this device")});
+$("clear-saved").addEventListener("click",async()=>{await CustomerDB.clear();const f=$("checkout-form");["customerName","phone","address"].forEach(n=>f.elements[n].value="");f.elements.zone.value="";f.elements.zone.dispatchEvent(new Event("change"));setPin(null);$("saved-note").hidden=true;toast("Saved details cleared from this device")});
 
 /* ===== Phone splash screen ===== */
 (function(){const s=$("splash");if(!s)return;let done=false;
@@ -225,12 +229,28 @@ if(isPhone())showView((location.hash.match(/^#page-(\w+)/)||[])[1]||"home");
 /* ===== PWA: service worker + install prompts ===== */
 (function(){
 if("serviceWorker"in navigator&&(location.protocol==="https:"||location.hostname==="localhost"||location.hostname==="127.0.0.1")){
- addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").then(reg=>{
-  const urls=[...new Set(products.map(p=>p.image).concat(HERO_SLIDES.map(s=>s.img)))];
-  const send=()=>{const w=reg.active||navigator.serviceWorker.controller;if(w)w.postMessage({type:"precache",urls})};
-  (window.requestIdleCallback||setTimeout)(()=>navigator.serviceWorker.ready.then(send),3000);
-  reg.addEventListener("updatefound",()=>{const n=reg.installing;n&&n.addEventListener("statechange",()=>{if(n.state==="installed"&&navigator.serviceWorker.controller)toast("Update ready — reopen the app to get the latest menu")})});
- }).catch(()=>{})});
+ const bar=$("update-bar");let waiting=null,reloading=false;
+ function offerUpdate(w){waiting=w;bar.hidden=false}
+ $("update-later").addEventListener("click",()=>{bar.hidden=true});
+ $("update-reload").addEventListener("click",()=>{
+  try{sessionStorage.setItem("bb-cart-restore",JSON.stringify([...cart]))}catch{}
+  $("update-reload").textContent="Updating…";
+  if(waiting)waiting.postMessage({type:"skipWaiting"});else location.reload();
+  setTimeout(()=>location.reload(),4000)});
+ navigator.serviceWorker.addEventListener("controllerchange",()=>{if(reloading)return;if(!window.__hadController)return;reloading=true;location.reload()});
+ addEventListener("load",()=>{
+  window.__hadController=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(reg=>{
+   const urls=[...new Set(products.map(p=>p.image).concat(HERO_SLIDES.map(s=>s.img)))];
+   const send=()=>{const w=reg.active||navigator.serviceWorker.controller;if(w)w.postMessage({type:"precache",urls})};
+   setTimeout(()=>navigator.serviceWorker.ready.then(send),3000);
+   if(reg.waiting&&navigator.serviceWorker.controller)offerUpdate(reg.waiting);
+   reg.addEventListener("updatefound",()=>{const n=reg.installing;n&&n.addEventListener("statechange",()=>{if(n.state==="installed"&&navigator.serviceWorker.controller)offerUpdate(n)})});
+   const check=()=>reg.update().catch(()=>{});
+   setInterval(check,30*60*1000);
+   document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")check()});
+   addEventListener("online",check);
+  }).catch(()=>{})});
 }
 const standalone=()=>matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
 if(standalone()){document.documentElement.classList.add("is-app");return}
@@ -254,3 +274,15 @@ $("install-close").addEventListener("click",()=>hideBanner(true));
 sheetItem.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();$("m-sheet").hidden=true;install()});
 const closeIos=()=>{$("ios-help").hidden=true};$("ios-ok").addEventListener("click",closeIos);$("ios-bg").addEventListener("click",closeIos);
 })();
+
+/* ===== OpenStreetMap pin ===== */
+function setPin(lat,lng,label){
+ const box=$("pin-box");$("pin-lat").value=lat?String(lat):"";$("pin-lng").value=lng?String(lng):"";
+ if(lat){$("pin-title").textContent="Location pinned ✓";$("pin-sub").textContent=label||(+lat).toFixed(5)+", "+(+lng).toFixed(5);$("pin-open").textContent="Change";box.classList.add("done")}
+ else{$("pin-title").textContent="Pin your exact location";$("pin-sub").textContent="Helps our rider find you fast. Uses OpenStreetMap.";$("pin-open").textContent="Open map";box.classList.remove("done")}
+}
+$("pin-open").addEventListener("click",()=>BBMapPicker.open({lat:+$("pin-lat").value||null,lng:+$("pin-lng").value||null,onConfirm:r=>{
+ setPin(r.lat,r.lng,r.name?r.name.split(",").slice(0,3).join(","):"");
+ if(r.shortName&&!$("address").value.trim())$("address").value=r.shortName;
+ toast("Location pinned 📍")}}));
+$("order-type").addEventListener("change",()=>{$("pin-box").hidden=$("order-type").value==="Pickup"});

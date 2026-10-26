@@ -1,9 +1,9 @@
 /* Buxton Bites service worker — offline-ready PWA. Bump VERSION on each release. */
-const VERSION="bb-v1";
+const VERSION="bb-v5";
 const CORE_CACHE=`${VERSION}-core`,IMG_CACHE=`${VERSION}-img`;
-const CORE=["./","index.html","styles.css","app.js","manifest.webmanifest","assets/buxton-bites-logo.png","assets/mpesa-logo.png","assets/whatsapp-logo.png","assets/splash.jpg","assets/icons/icon-192.png","assets/icons/icon-512.png","assets/icons/apple-touch-icon.png"];
+const CORE=["./","index.html","styles.css","app.js","map.js","manifest.webmanifest","assets/buxton-bites-logo.png","assets/mpesa-logo.png","assets/whatsapp-logo.png","assets/splash.jpg","assets/icons/icon-192.png","assets/icons/icon-512.png","assets/icons/apple-touch-icon.png"];
 
-self.addEventListener("install",e=>{e.waitUntil(caches.open(CORE_CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()))});
+self.addEventListener("install",e=>{e.waitUntil(caches.open(CORE_CACHE).then(c=>c.addAll(CORE)))}); /* no auto skipWaiting: the page asks the user to reload first */
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>!k.startsWith(VERSION)).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 
 self.addEventListener("message",e=>{
