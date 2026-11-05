@@ -1,4 +1,4 @@
-const APP_VERSION="12";
+const APP_VERSION="13";
 /* Self-heal: if index.html and app.js come from different releases (stale cache / partial upload), wipe caches and reload once. */
 (function(){try{const m=document.querySelector('meta[name="bb-version"]');if((m?m.content:"0")===APP_VERSION||sessionStorage.getItem("bb-heal"))return;sessionStorage.setItem("bb-heal","1");
  (async()=>{try{if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.map(r=>r.unregister()))}if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}}catch(_){}
@@ -120,8 +120,13 @@ $("go-checkout").addEventListener("click",()=>{if(!cart.size)return;closeCart();
 $("close-checkout").addEventListener("click",()=>{$("checkout-modal").hidden=true;document.body.classList.remove("no-scroll")});
 $("checkout-modal").addEventListener("click",e=>{if(e.target===$("checkout-modal")){$("checkout-modal").hidden=true;document.body.classList.remove("no-scroll")}});
 $("order-type").addEventListener("change",e=>{const pickup=e.target.value==="Pickup";$("address-label").firstChild.textContent=pickup?"Pickup note / preferred time":"Street / delivery address";$("address").required=!pickup;$("address").placeholder=pickup?"Optional collection note":"Street, estate, building, landmark";$("zone-label").hidden=pickup;$("zone").required=!pickup;updateDelivery()});
-$("zone").addEventListener("change",updateDelivery);$("payment").addEventListener("change",updateDelivery);$("mpesa-code").addEventListener("input",e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,"")});$("copy-till-checkout").addEventListener("click",()=>$("copy-till").click());
-$("copy-till").addEventListener("click",async()=>{try{await navigator.clipboard.writeText("1817896");toast("Till number copied: 1817896")}catch{toast("M-Pesa Till Number: 1817896")}});
+$("zone").addEventListener("change",updateDelivery);$("payment").addEventListener("change",updateDelivery);$("mpesa-code").addEventListener("input",e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,"")});
+const TILL="1817896";
+async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch(_){try{const x=document.createElement("textarea");x.value=t;x.setAttribute("readonly","");x.style.cssText="position:fixed;top:0;left:0;opacity:0";document.body.appendChild(x);x.select();x.setSelectionRange(0,99);const ok=document.execCommand("copy");x.remove();return ok}catch(__){return false}}}
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-copy-till]");if(!b)return;e.preventDefault();const ok=await copyText(TILL);
+ const lab=b.querySelector("span")||b,use=b.querySelector("use"),old=lab===b?b.lastChild:lab;
+ if(ok){toast("Till number copied: "+TILL);b.classList.add("copied");if(use)use.setAttribute("href","#i-check");const prev=lab.textContent;if(lab!==b)lab.textContent="Copied";setTimeout(()=>{b.classList.remove("copied");if(use)use.setAttribute("href","#i-copy");if(lab!==b)lab.textContent=prev},2000)}
+ else toast("Couldn't copy — Till number: "+TILL)});
 
 /* ===== Checkout validation (inline messages) + Terms/Privacy ===== */
 function clearErrors(){const f=$("checkout-form");f.querySelectorAll(".field-err").forEach(n=>n.remove());f.querySelectorAll("[aria-invalid]").forEach(n=>{n.removeAttribute("aria-invalid");n.classList.remove("invalid")});$("agree-label").classList.remove("invalid");$("pin-box").classList.remove("invalid");$("form-errors").hidden=true}

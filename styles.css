@@ -502,3 +502,12 @@ html.mp-open,html.mp-open body{overflow:hidden}
 .icon-button .ic,#install-close .ic,#update-later .ic{width:16px;height:16px;display:block;margin:auto}
 .search>span .ic{width:20px;height:20px;display:block}
 .m-nav-orb .ic{width:24px;height:24px}
+
+/* ===== Till copy buttons ===== */
+.copy-button{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;transition:background .2s,color .2s,border-color .2s}
+.copy-button .ic{width:14px;height:14px}
+.copy-button.copied{background:#eef8f0;border-color:#bfe3c6;color:#24633a}
+.copy-inline{display:inline-flex;align-items:center;gap:4px;border:1px solid #e9b97a;background:#fff8ee;color:#a62b16;border-radius:99px;padding:2px 9px;font:800 11px "DM Sans",sans-serif;cursor:pointer;vertical-align:1px}
+.copy-inline .ic{width:12px;height:12px;margin:0}
+.copy-inline.copied{background:#eef8f0;border-color:#bfe3c6;color:#24633a}
+.pay-till .copy-button{background:#fff;border-color:#bfe3c6;color:#1a6b3a;font-weight:800;padding:10px 14px}

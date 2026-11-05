@@ -1,5 +1,5 @@
 /* Buxton Bites service worker — offline-ready PWA. Bump VERSION on each release. */
-const VERSION="bb-v12";
+const VERSION="bb-v13";
 const CORE_CACHE=`${VERSION}-core`,IMG_CACHE=`${VERSION}-img`;
 const CORE=["./","index.html","styles.css","app.js","map.js","manifest.webmanifest","assets/buxton-bites-logo.png","assets/mpesa-logo.png","assets/whatsapp-logo.png","assets/splash.jpg","assets/icons/icon-192.png","assets/icons/icon-512.png","assets/icons/apple-touch-icon.png"];
 
