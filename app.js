@@ -1,4 +1,10 @@
+const APP_VERSION="12";
+/* Self-heal: if index.html and app.js come from different releases (stale cache / partial upload), wipe caches and reload once. */
+(function(){try{const m=document.querySelector('meta[name="bb-version"]');if((m?m.content:"0")===APP_VERSION||sessionStorage.getItem("bb-heal"))return;sessionStorage.setItem("bb-heal","1");
+ (async()=>{try{if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.map(r=>r.unregister()))}if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}}catch(_){}
+  location.replace(location.pathname+"?v="+APP_VERSION+location.hash)})()}catch(_){}})();
 const WHATSAPP_NUMBER = "254791511386";
+const ico=n=>`<svg class="ic" aria-hidden="true"><use href="#i-${n}"/></svg>`;
 const money = n => "KSh " + Number(n).toLocaleString("en-KE");
 const products = [
 {id:"mahamri",name:"Mahamri (3 for)",price:50,category:"Breakfast",image:"assets/breakfast/mahamri.jpg",description:"Soft, lightly sweet coastal favourites."},
@@ -57,7 +63,7 @@ const DELIVERY_ZONES=[
 {group:"South Mainland",areas:["Likoni","Mtongwe","Shelly Beach"]}
 ];
 /* Standard delivery fee (KSh) per area. Edit freely; areas without a fee show "confirmed on WhatsApp". */
-const PIN_REQUIRED=true; // delivery orders must include a map pin (skipped automatically when offline)
+const PIN_REQUIRED=false; // pin comes from "Use my current location"; the street/address field is what is required
 const DELIVERY_FEES={
 "Old Town":150,"Ganjoni":150,"Tudor":150,"Kizingo":150,"Buxton":100,"Makupa":150,"Tononoka":150,"Mbaraki":150,
 "Nyali":250,"Mkomani":250,"Kongowea":250,"Kisauni":300,"Bamburi":300,"Shanzu":400,"Mtwapa":450,
@@ -66,11 +72,11 @@ const DELIVERY_FEES={
 };
 
 const HERO_SLIDES=[
-{id:"pilau",eyebrow:"MADE WITH LOVE IN MOMBASA",title:"Taste<br><em>ya Pwani.</em>",text:"From coastal breakfast bites to comforting biriani and signature pilau — your next favourite meal is just a WhatsApp message away.",img:"assets/lunch-dinner/signature-pilau.jpg",emoji:"🌶️"},
-{id:"mahamri",eyebrow:"COASTAL BREAKFAST",title:"Start the day<br><em>the Swahili way.</em>",text:"Soft, fragrant mahamri, mbahazi and warm bites to kick off your morning.",img:"assets/breakfast/mahamri.jpg",emoji:"🥐"},
-{id:"mutton-mandhi",eyebrow:"LUNCH & DINNER",title:"Rich, aromatic<br><em>mandhi.</em>",text:"Hearty mains, biriani and coconut dishes — made for a proper sit-down meal.",img:"assets/lunch-dinner/mutton-mandhi.jpg",emoji:"🍖"},
-{id:"dawa",eyebrow:"HOT DRINKS",title:"Warm up with<br><em>special dawa.</em>",text:"Spiced teas, milk tea and Arabic coffee to keep you cosy, any time of day.",img:"assets/hot-drinks/special-dawa.jpg",emoji:"☕"},
-{id:"mango",eyebrow:"FRESH & COOL",title:"Cool down,<br><em>coastal style.</em>",text:"Mango, passion, pineapple and more — chilled juices and sodas to pair with any meal.",img:"assets/cold-drinks/mango-juice.jpg",emoji:"🥭"}
+{id:"pilau",eyebrow:"MADE WITH LOVE IN MOMBASA",title:"Taste<br><em>ya Pwani.</em>",text:"From coastal breakfast bites to comforting biriani and signature pilau — your next favourite meal is just a WhatsApp message away.",img:"assets/lunch-dinner/signature-pilau.jpg",emoji:"flame"},
+{id:"mahamri",eyebrow:"COASTAL BREAKFAST",title:"Start the day<br><em>the Swahili way.</em>",text:"Soft, fragrant mahamri, mbahazi and warm bites to kick off your morning.",img:"assets/breakfast/mahamri.jpg",emoji:"croissant"},
+{id:"mutton-mandhi",eyebrow:"LUNCH & DINNER",title:"Rich, aromatic<br><em>mandhi.</em>",text:"Hearty mains, biriani and coconut dishes — made for a proper sit-down meal.",img:"assets/lunch-dinner/mutton-mandhi.jpg",emoji:"beef"},
+{id:"dawa",eyebrow:"HOT DRINKS",title:"Warm up with<br><em>special dawa.</em>",text:"Spiced teas, milk tea and Arabic coffee to keep you cosy, any time of day.",img:"assets/hot-drinks/special-dawa.jpg",emoji:"coffee"},
+{id:"mango",eyebrow:"FRESH & COOL",title:"Cool down,<br><em>coastal style.</em>",text:"Mango, passion, pineapple and more — chilled juices and sodas to pair with any meal.",img:"assets/cold-drinks/mango-juice.jpg",emoji:"citrus"}
 ];
 
 const MIN_LEAD_MINUTES=60; // earliest a same-day exact time can be booked
@@ -113,19 +119,59 @@ $("browse-menu").addEventListener("click",()=>{closeCart();$("menu").scrollIntoV
 $("go-checkout").addEventListener("click",()=>{if(!cart.size)return;closeCart();$("checkout-modal").hidden=false;document.body.classList.add("no-scroll")});
 $("close-checkout").addEventListener("click",()=>{$("checkout-modal").hidden=true;document.body.classList.remove("no-scroll")});
 $("checkout-modal").addEventListener("click",e=>{if(e.target===$("checkout-modal")){$("checkout-modal").hidden=true;document.body.classList.remove("no-scroll")}});
-$("order-type").addEventListener("change",e=>{const pickup=e.target.value==="Pickup";$("address-label").firstChild.textContent=pickup?"Pickup note / preferred time":"Delivery location / address";$("address").required=!pickup;$("address").placeholder=pickup?"Optional collection note":"Estate, building, landmark";$("zone-label").hidden=pickup;$("zone").required=!pickup;updateDelivery()});
+$("order-type").addEventListener("change",e=>{const pickup=e.target.value==="Pickup";$("address-label").firstChild.textContent=pickup?"Pickup note / preferred time":"Street / delivery address";$("address").required=!pickup;$("address").placeholder=pickup?"Optional collection note":"Street, estate, building, landmark";$("zone-label").hidden=pickup;$("zone").required=!pickup;updateDelivery()});
 $("zone").addEventListener("change",updateDelivery);$("payment").addEventListener("change",updateDelivery);$("mpesa-code").addEventListener("input",e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,"")});$("copy-till-checkout").addEventListener("click",()=>$("copy-till").click());
 $("copy-till").addEventListener("click",async()=>{try{await navigator.clipboard.writeText("1817896");toast("Till number copied: 1817896")}catch{toast("M-Pesa Till Number: 1817896")}});
+
+/* ===== Checkout validation (inline messages) + Terms/Privacy ===== */
+function clearErrors(){const f=$("checkout-form");f.querySelectorAll(".field-err").forEach(n=>n.remove());f.querySelectorAll("[aria-invalid]").forEach(n=>{n.removeAttribute("aria-invalid");n.classList.remove("invalid")});$("agree-label").classList.remove("invalid");$("pin-box").classList.remove("invalid");$("form-errors").hidden=true}
+function markErr(el,msg){const box=el.id==="pin-box"?el:null;el.setAttribute?.("aria-invalid","true");el.classList.add("invalid");const holder=el.closest("label")||el;const p=document.createElement("p");p.className="field-err";p.textContent=msg;p.id="err-"+(el.id||el.name);
+ if(el.type==="checkbox"||box)holder.insertAdjacentElement("afterend",p);else holder.appendChild(p);if(el.type==="checkbox")$("agree-label").classList.add("invalid")}
+function validateCheckout(){
+ const f=$("checkout-form"),v=n=>String(f.elements[n].value||"").trim(),pickup=v("orderType")==="Pickup",errs=[];
+ const add=(el,msg,label)=>errs.push({el,msg,label});
+ if(!v("customerName"))add(f.elements.customerName,"Please enter your name.","Your name");
+ const digits=v("phone").replace(/[\s\-()+]/g,"");
+ if(!v("phone"))add(f.elements.phone,"Please enter your phone number so we can reach you.","Phone number");
+ else if(!/^(?:254|0)?[17]\d{8}$/.test(digits))add(f.elements.phone,"That phone number doesn't look right. Use a Kenyan number like 0712 345 678.","Phone number");
+ if(!pickup){
+  if(!v("zone"))add(f.elements.zone,"Please choose your delivery area so we can work out the fee.","Delivery area");
+  if(!v("address"))add(f.elements.address,"Please enter your estate, building or landmark.","Delivery address");
+  else if(v("address").length<3)add(f.elements.address,"Please give a little more detail about where we should deliver.","Delivery address");
+ }
+ if(v("time")==="exact"&&!v("clock"))add(f.elements.clock,"Please choose the time you want your order.","Time");
+ if(v("payment").startsWith("M-Pesa")&&!$("pay-panel").hidden){
+  const known=pickup||typeof DELIVERY_FEES[v("zone")]==="number";
+  if(known){const c=v("mpesaCode");if(!c)add(f.elements.mpesaCode,"Please enter the 10-character M-Pesa code from your payment SMS.","M-Pesa code");else if(!/^[A-Za-z0-9]{10}$/.test(c))add(f.elements.mpesaCode,"The M-Pesa code must be exactly 10 letters/numbers (you entered "+c.length+").","M-Pesa code")}
+ }
+ if(!$("agree").checked)add($("agree"),"Please tick the box to agree to the Terms of Service and Privacy Policy before sending your order.","Agree to Terms & Privacy");
+ return errs}
+function runValidation(){
+ clearErrors();const errs=validateCheckout();if(!errs.length)return true;
+ errs.forEach(e=>markErr(e.el,e.msg));
+ const s=$("form-errors");s.innerHTML="<b>Please fix "+(errs.length===1?"this before sending:":errs.length+" things before sending:")+"</b><ul>"+errs.map((e,i)=>`<li><button type="button" data-i="${i}">${e.label} — ${e.msg}</button></li>`).join("")+"</ul>";s.hidden=false;
+ s.onclick=ev=>{const b=ev.target.closest("button[data-i]");if(!b)return;const el=errs[+b.dataset.i].el;el.scrollIntoView({block:"center",behavior:"smooth"});(el.focus&&el.id!=="pin-box"?el:$("pin-gps")).focus({preventScroll:true})};
+ s.scrollIntoView({block:"start",behavior:"smooth"});s.focus({preventScroll:true});return false}
+/* clear a field's message as soon as the customer fixes it */
+$("checkout-form").addEventListener("input",e=>{const el=e.target;const m=document.getElementById("err-"+(el.id||el.name));if(m){m.remove();el.classList.remove("invalid");el.removeAttribute("aria-invalid");if(el.id==="agree")$("agree-label").classList.remove("invalid")}});
+$("checkout-form").addEventListener("change",e=>{const el=e.target;const m=document.getElementById("err-"+(el.id||el.name));if(m){m.remove();el.classList.remove("invalid");el.removeAttribute("aria-invalid");if(el.id==="agree")$("agree-label").classList.remove("invalid")}});
+$("go-checkout").addEventListener("click",()=>{$("agree").checked=false;clearErrors()});
+const legalM=$("legal-modal");
+function openLegal(which){which=which==="privacy"?"privacy":"terms";$("legal-title").textContent=which==="privacy"?"Privacy Policy":"Terms of Service";["terms","privacy"].forEach(k=>{$("legal-"+k).hidden=k!==which;$("tab-"+k).setAttribute("aria-selected",String(k===which));$("tab-"+k).classList.toggle("on",k===which)});legalM.hidden=false;legalM.querySelector(".legal-modal").scrollTop=0;$("legal-close").focus()}
+const closeLegal=()=>{legalM.hidden=true};
+document.addEventListener("click",e=>{const b=e.target.closest("[data-legal]");if(!b)return;e.preventDefault();e.stopPropagation();const sh=$("m-sheet");if(sh)sh.hidden=true;openLegal(b.dataset.legal)},true);
+$("legal-close").addEventListener("click",closeLegal);legalM.addEventListener("click",e=>{if(e.target===legalM)closeLegal()});
+addEventListener("keydown",e=>{if(e.key==="Escape"&&!legalM.hidden)closeLegal()});
 $("checkout-form").addEventListener("submit",e=>{
- e.preventDefault();if(!cart.size){toast("Add items before checkout");return}
+ e.preventDefault();if(!cart.size){toast("Add items before checkout");return}if(!runValidation())return;
  const form=new FormData(e.currentTarget);const name=String(form.get("customerName")||"").trim();const phone=String(form.get("phone")||"").trim();const type=form.get("orderType");const address=String(form.get("address")||"").trim();const payment=form.get("payment");const timeMode=form.get("time");let time="As soon as possible";
 if(timeMode==="exact"){const clock=String(form.get("clock")||""),dv=Number(form.get("date")||0);if(!clock){toast("Please choose the time you want your order.");$("time-clock").focus();return}
 const when=new Date();when.setDate(when.getDate()+dv);const[hh,mm]=clock.split(":").map(Number);when.setHours(hh,mm,0,0);
 if(when.getTime()<Date.now()+MIN_LEAD_MINUTES*60000){toast(`Please choose a time at least ${MIN_LEAD_MINUTES} minutes from now.`);$("time-clock").focus();return}
-time=`${dayLabel(dv)} at ${fmtTime(hh,mm)}`}const notes=String(form.get("notes")||"").trim();const zone=String(form.get("zone")||"");const zfee=DELIVERY_FEES[zone];const code=String(form.get("mpesaCode")||"").trim().toUpperCase();const isMp=String(payment).startsWith("M-Pesa");const lat=String(form.get("lat")||""),lng=String(form.get("lng")||"");if(type!=="Pickup"&&PIN_REQUIRED&&navigator.onLine&&!lat){toast("Please pin your delivery location on the map.");$("pin-open").click();return}
- const lines=[`Hello Buxton Bites! I'd like to place an order.`,``,`*CUSTOMER DETAILS*`,`Name: ${name}`,`Phone: ${phone}`,`Order type: ${type}`];if(type!=="Pickup"&&zone)lines.push(`Delivery zone: ${zone}`);if(type!=="Pickup"&&lat)lines.push(`📍 Pinned location: ${BBMapPicker.osmLink(lat,lng)}`,`🧭 Navigate: ${BBMapPicker.gmapsLink(lat,lng)}`);if(address)lines.push(`${type==="Pickup"?"Pickup note":"Delivery address"}: ${address}`);
- lines.push(`${type==="Pickup"?"Pickup":"Delivery"} time: ${time}`,``,`*MY ORDER*`);cart.forEach((qty,id)=>{const p=products.find(x=>x.id===id);lines.push(`• ${p.name} x${qty} — ${money(p.price*qty)}`)});lines.push(``,`*Food subtotal: ${money(subtotal())}*`,...(type!=="Pickup"&&typeof zfee==="number"?[`Delivery fee: ${money(zfee)}`,`*Estimated total: ${money(subtotal()+zfee)}*`]:[]),`Payment method: ${payment}`,...(isMp?[code?`*M-Pesa code: ${code}*`:`M-Pesa code: (to follow — delivery fee to be confirmed)`,`⚠️ Please verify this code against the Till before preparing/delivering.`]:[]));if(notes)lines.push(`Order notes: ${notes}`);lines.push(``,`Please confirm availability and final total. Thank you!`);
- if($("remember").checked)CustomerDB.set({name,phone,orderType:type,zone,address,payment,lat,lng});else CustomerDB.clear();
+time=`${dayLabel(dv)} at ${fmtTime(hh,mm)}`}const notes=String(form.get("notes")||"").trim();const zone=String(form.get("zone")||"");const zfee=DELIVERY_FEES[zone];const code=String(form.get("mpesaCode")||"").trim().toUpperCase();const isMp=String(payment).startsWith("M-Pesa");const lat=String(form.get("lat")||""),lng=String(form.get("lng")||"");
+ const lines=[`Hello Buxton Bites! I'd like to place an order.`,``,`*CUSTOMER DETAILS*`,`Name: ${name}`,`Phone: ${phone}`,`Order type: ${type}`];if(type!=="Pickup"&&zone)lines.push(`Delivery zone: ${zone}`);if(type!=="Pickup"&&lat)lines.push(`📍 Location (Google Maps): ${BBMapPicker.gmapsLink(lat,lng)}`,`🗺 OpenStreetMap: ${BBMapPicker.osmLink(lat,lng)}`);if(address)lines.push(`${type==="Pickup"?"Pickup note":"Delivery address"}: ${address}`);
+ lines.push(`${type==="Pickup"?"Pickup":"Delivery"} time: ${time}`,``,`*MY ORDER*`);cart.forEach((qty,id)=>{const p=products.find(x=>x.id===id);lines.push(`• ${p.name} x${qty} — ${money(p.price*qty)}`)});lines.push(``,`*Food subtotal: ${money(subtotal())}*`,...(type!=="Pickup"&&typeof zfee==="number"?[`Delivery fee: ${money(zfee)}`,`*Estimated total: ${money(subtotal()+zfee)}*`]:[]),`Payment method: ${payment}`,...(isMp?[code?`*M-Pesa code: ${code}*`:`M-Pesa code: (to follow — delivery fee to be confirmed)`,`⚠ Please verify this code against the Till before preparing/delivering.`]:[]));if(notes)lines.push(`Order notes: ${notes}`);lines.push(``,`Please confirm availability and final total. Thank you!`);
+ if($("remember").checked)CustomerDB.set({name,phone,orderType:type,zone,address,payment,lat,lng,addrAuto:$("address").dataset.auto==="1"});else CustomerDB.clear();
  const url=`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join("\n"))}`;window.open(url,"_blank","noopener,noreferrer");$("checkout-modal").hidden=true;document.body.classList.remove("no-scroll");
 });
 $("year").textContent=new Date().getFullYear();
@@ -138,7 +184,7 @@ const sl=[...wrap.children],dt=[...dots.children],txt=$("hero-text");
 function show(n){cur=(n+HERO_SLIDES.length)%HERO_SLIDES.length;const s=HERO_SLIDES[cur],p=products.find(x=>x.id===s.id);
 sl.forEach((e,i)=>e.classList.toggle("active",i===cur));dt.forEach((e,i)=>e.classList.toggle("active",i===cur));
 txt.classList.add("swap");setTimeout(()=>{$("hero-eyebrow").innerHTML="<span></span> "+s.eyebrow;$("hero-title").innerHTML=s.title;$("hero-desc").textContent=s.text;txt.classList.remove("swap")},220);
-$("chip-name").textContent=p?p.name:"";$("chip-price").textContent=p?money(p.price):"";$("chip-add").dataset.add=s.id;$("hero-chip").firstElementChild.textContent=s.emoji}
+$("chip-name").textContent=p?p.name:"";$("chip-price").textContent=p?money(p.price):"";$("chip-add").dataset.add=s.id;$("hero-chip").firstElementChild.innerHTML=ico(s.emoji)}
 function play(){stop();if(!matchMedia("(prefers-reduced-motion: reduce)").matches)timer=setInterval(()=>show(cur+1),5500)}
 function stop(){clearInterval(timer)}
 $("hero-prev").onclick=()=>{show(cur-1);play()};$("hero-next").onclick=()=>{show(cur+1);play()};
@@ -152,7 +198,7 @@ if("IntersectionObserver"in window){const io=new IntersectionObserver(es=>es.for
 
 /* ===== Mobile app UI ===== */
 (function(){
-const hr=new Date().getHours();$("m-greet").textContent=(hr<12?"Good morning!":hr<17?"Good afternoon!":"Good evening!")+" 👋";
+const hr=new Date().getHours();$("m-greet").textContent=(hr<12?"Good morning!":hr<17?"Good afternoon!":"Good evening!");
 const arrow='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
 // banner
 const sl=$("m-slides"),dots=$("m-dots");
@@ -168,7 +214,7 @@ play();
 // popular
 let favs=[];try{favs=JSON.parse(localStorage.getItem("bb-favs")||"[]")}catch{}
 const pop=[["pilau","Signature"],["beef-biriani","Hearty"],["mahamri","Coastal"],["mutton-mandhi","Special"]];
-$("m-popular").innerHTML=pop.map(([id,tag],i)=>{const p=products.find(x=>x.id===id);if(!p)return"";return `<article class="m-card"><span class="m-badge b${i%3}">${tag}</span><button class="m-heart${favs.includes(id)?" on":""}" data-fav="${id}" aria-label="Favourite ${p.name}">♥</button><img src="${p.image}" alt="${p.name}" loading="lazy"><h3>${p.name}</h3><p>${p.description}</p><div class="m-card-foot"><b>${money(p.price)}</b><button class="m-plus" data-add="${id}" aria-label="Add ${p.name}">+</button></div></article>`}).join("");
+$("m-popular").innerHTML=pop.map(([id,tag],i)=>{const p=products.find(x=>x.id===id);if(!p)return"";return `<article class="m-card"><span class="m-badge b${i%3}">${tag}</span><button class="m-heart${favs.includes(id)?" on":""}" data-fav="${id}" aria-label="Favourite ${p.name}">${ico("heart")}</button><img src="${p.image}" alt="${p.name}" loading="lazy"><h3>${p.name}</h3><p>${p.description}</p><div class="m-card-foot"><b>${money(p.price)}</b><button class="m-plus" data-add="${id}" aria-label="Add ${p.name}">+</button></div></article>`}).join("");
 $("m-popular").addEventListener("click",e=>{const f=e.target.closest("[data-fav]");if(!f)return;f.classList.toggle("on");const id=f.dataset.fav;favs=f.classList.contains("on")?[...new Set([...favs,id])]:favs.filter(x=>x!==id);try{localStorage.setItem("bb-favs",JSON.stringify(favs))}catch{}});
 // header actions
 $("m-cart-btn").onclick=()=>$("open-cart").click();$("m-nav-order").onclick=()=>$("open-cart").click();
@@ -196,15 +242,14 @@ async function tx(mode,fn){try{const db=await open();return await new Promise((r
 return{get:()=>tx("readonly",s=>s.get("profile")),set:v=>tx("readwrite",s=>s.put({...v,savedAt:Date.now()},"profile")),clear:()=>tx("readwrite",s=>s.delete("profile"))}})();
 async function fillSaved(){const p=await CustomerDB.get();if(!p||!p.name)return;
  const f=$("checkout-form"),set=(n,v)=>{const el=f.elements[n];if(el&&v&&!String(el.value).trim())el.value=v};
- set("customerName",p.name);set("phone",p.phone);set("address",p.address);
+ set("customerName",p.name);set("phone",p.phone);set("address",p.address);if(p.addrAuto&&f.elements.address.value===p.address)f.elements.address.dataset.auto="1";
  if(p.orderType&&f.elements.orderType.value!==p.orderType){f.elements.orderType.value=p.orderType;f.elements.orderType.dispatchEvent(new Event("change"))}
  if(p.zone&&!f.elements.zone.value&&[...f.elements.zone.options].some(o=>o.value===p.zone))f.elements.zone.value=p.zone;
  if(p.payment&&[...f.elements.payment.options].some(o=>o.value===p.payment||o.text===p.payment))f.elements.payment.value=p.payment;
  f.elements.zone.dispatchEvent(new Event("change"));
- if(p.lat&&!$("pin-lat").value)setPin(p.lat,p.lng,"Saved location — tap Change to update");
+ if(p.lat&&!p.addrAuto&&$("pin-lat")&&!$("pin-lat").value)setPin(p.lat,p.lng,"Saved location — tap Update my location to refresh","saved");
  $("saved-name").textContent=p.name.split(" ")[0];$("saved-note").hidden=false;$("remember").checked=true}
 CustomerDB.get().then(p=>{if(p&&p.name){const g=$("m-greet");if(g)g.textContent=g.textContent.replace("!",", "+p.name.split(" ")[0]+"!")}});
-$("go-checkout").addEventListener("click",()=>{fillSaved()});
 $("clear-saved").addEventListener("click",async()=>{await CustomerDB.clear();const f=$("checkout-form");["customerName","phone","address"].forEach(n=>f.elements[n].value="");f.elements.zone.value="";f.elements.zone.dispatchEvent(new Event("change"));setPin(null);$("saved-note").hidden=true;toast("Saved details cleared from this device")});
 
 /* ===== Phone splash screen ===== */
@@ -267,7 +312,7 @@ async function install(){
  toast("Open your browser menu and choose “Install app” or “Add to Home screen”.");
 }
 addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferred=e;sheetItem.hidden=false;setTimeout(showBanner,4000)});
-addEventListener("appinstalled",()=>{deferred=null;hideBanner(false);sheetItem.hidden=true;toast("Buxton Bites installed 🎉")});
+addEventListener("appinstalled",()=>{deferred=null;hideBanner(false);sheetItem.hidden=true;toast("Buxton Bites installed")});
 if(isIOS){sheetItem.hidden=false;setTimeout(showBanner,5000)}
 $("install-btn").addEventListener("click",install);
 $("install-close").addEventListener("click",()=>hideBanner(true));
@@ -275,14 +320,81 @@ sheetItem.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();$(
 const closeIos=()=>{$("ios-help").hidden=true};$("ios-ok").addEventListener("click",closeIos);$("ios-bg").addEventListener("click",closeIos);
 })();
 
-/* ===== OpenStreetMap pin ===== */
-function setPin(lat,lng,label){
- const box=$("pin-box");$("pin-lat").value=lat?String(lat):"";$("pin-lng").value=lng?String(lng):"";
- if(lat){$("pin-title").textContent="Location pinned ✓";$("pin-sub").textContent=label||(+lat).toFixed(5)+", "+(+lng).toFixed(5);$("pin-open").textContent="Change";box.classList.add("done")}
- else{$("pin-title").textContent="Pin your exact location";$("pin-sub").textContent="Helps our rider find you fast. Uses OpenStreetMap.";$("pin-open").textContent="Open map";box.classList.remove("done")}
+/* ===== OpenStreetMap pin + automatic location detection ===== */
+/* Approximate centre (lat,lng) of each delivery area. Used to match the customer's GPS position to the nearest zone. Edit freely. */
+const ZONE_COORDS={
+"Old Town":[-4.0626,39.6773],"Ganjoni":[-4.0700,39.6700],"Tudor":[-4.0490,39.6610],"Kizingo":[-4.0690,39.6540],"Buxton":[-4.0475,39.6745],"Makupa":[-4.0420,39.6450],"Tononoka":[-4.0560,39.6710],"Mbaraki":[-4.0650,39.6580],
+"Nyali":[-4.0230,39.7110],"Mkomani":[-4.0310,39.7000],"Kongowea":[-4.0270,39.6850],"Kisauni":[-3.9950,39.7120],"Bamburi":[-3.9830,39.7230],"Shanzu":[-3.9560,39.7380],"Mtwapa":[-3.9410,39.7450],
+"Changamwe":[-4.0200,39.6200],"Port Reitz / Airport":[-4.0330,39.5950],"Miritini":[-3.9960,39.5750],"Jomvu":[-3.9890,39.6130],"Mikindani":[-4.0000,39.6330],"Chaani":[-4.0210,39.6350],
+"Likoni":[-4.0900,39.6600],"Mtongwe":[-4.0970,39.6330],"Shelly Beach":[-4.1170,39.6540]
+};
+const ZONE_MAX_KM=12;          // nearest zone centre must be within this distance to auto-select it
+const SERVICE_BOX={s:-4.20,n:-3.88,w:39.50,e:39.80}; // rough Mombasa service area; outside this we don't pin or pick a zone
+const PIN_MAX_ACCURACY_M=1500; // GPS fixes worse than this are too vague to send to the rider as a pin
+const kmBetween=(a,b,c,d)=>{const r=Math.PI/180,x=Math.sin((c-a)*r/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin((d-b)*r/2)**2;return 12742*Math.asin(Math.sqrt(x))};
+function nearestZone(lat,lng){let best=null,bd=1e9;for(const z in ZONE_COORDS){const d=kmBetween(lat,lng,ZONE_COORDS[z][0],ZONE_COORDS[z][1]);if(d<bd){bd=d;best=z}}return{zone:best,km:bd}}
+
+/* Auto-fill rules: detection only ever writes into a field that is empty or was itself filled by detection (data-auto="1").
+   As soon as the customer types in / picks a value themselves, the flag is removed and detection leaves that field alone. */
+const autoOk=el=>!String(el.value).trim()||el.dataset.auto==="1";
+["zone","address"].forEach(id=>{const el=$(id);const clear=e=>{if(e.isTrusted)delete el.dataset.auto};el.addEventListener(id==="zone"?"change":"input",clear)});
+
+function setPin(lat,lng,label,src){
+ const box=$("pin-box");if(!box||!$("pin-lat"))return;$("pin-lat").value=lat?String(lat):"";$("pin-lng").value=lng?String(lng):"";
+ box.classList.remove("busy","warn");
+ if(lat){box.dataset.src=src||"manual";$("pin-title").textContent="Location pinned";$("pin-sub").textContent=label||(+lat).toFixed(5)+", "+(+lng).toFixed(5);$("pin-gps").lastChild.textContent=" Update my location";box.classList.add("done")}
+ else{delete box.dataset.src;$("pin-title").textContent="Share your location";$("pin-sub").textContent="Optional — we attach a map link so our rider finds you fast.";$("pin-gps").lastChild.textContent=" Use my current location";box.classList.remove("done")}
 }
-$("pin-open").addEventListener("click",()=>BBMapPicker.open({lat:+$("pin-lat").value||null,lng:+$("pin-lng").value||null,onConfirm:r=>{
- setPin(r.lat,r.lng,r.name?r.name.split(",").slice(0,3).join(","):"");
- if(r.shortName&&!$("address").value.trim())$("address").value=r.shortName;
- toast("Location pinned 📍")}}));
-$("order-type").addEventListener("change",()=>{$("pin-box").hidden=$("order-type").value==="Pickup"});
+function pinNote(text,cls){const box=$("pin-box");box.classList.remove("busy","warn");if(cls)box.classList.add(cls);$("pin-sub").textContent=text}
+
+let locGen=0,locBusy=false,locAuto=false; // locGen invalidates in-flight detections when the customer pins manually
+function applyZone(zone,gen){
+ const sel=$("zone");if(!zone||!autoOk(sel)||!sel.dataset)return false;
+ if(![...sel.options].some(o=>o.value===zone))return false;
+ if(sel.value!==zone){sel.value=zone;sel.dataset.auto="1";sel.dispatchEvent(new Event("change"))}return true}
+function applyAddress(text){const el=$("address");if(!text||!autoOk(el))return;if(el.value!==text){el.value=text;el.dataset.auto="1"}}
+
+function detectLocation(opts){
+ opts=opts||{};const manualClick=!!opts.manual,box=$("pin-box");
+ if(!box||$("order-type").value==="Pickup"||locBusy)return;
+ if(!manualClick&&(locAuto||($("pin-lat").value&&!autoOk($("address")))))return; // automatic attempts: once per checkout, never over an existing pin
+ locAuto=true;
+ if(!navigator.geolocation){if(manualClick)pinNote("This device can't share its location. Please type your street/address below.","warn");return}
+ const gen=++locGen;locBusy=true;pinNote("Finding your location…","busy");$("pin-gps").disabled=true;
+ const finish=()=>{locBusy=false;$("pin-gps").disabled=false};
+ navigator.geolocation.getCurrentPosition(async p=>{
+  const lat=p.coords.latitude,lng=p.coords.longitude,acc=p.coords.accuracy||0;
+  if(gen!==locGen){finish();return}
+  if(lat<SERVICE_BOX.s||lat>SERVICE_BOX.n||lng<SERVICE_BOX.w||lng>SERVICE_BOX.e){finish();setPin(null);pinNote("You seem to be outside our Mombasa delivery area. Pick your area below or message us on WhatsApp.","warn");return}
+  const nz=nearestZone(lat,lng),zone=nz.km<=ZONE_MAX_KM?nz.zone:null;
+  const preciseEnough=acc<=PIN_MAX_ACCURACY_M;
+  /* explicit button press may replace any earlier pin; automatic detection never overrides a saved/manual one (checked above) */
+  let rev=null;const addrEl=$("address"),oldPh=addrEl.placeholder,looking=preciseEnough&&autoOk(addrEl);if(looking)addrEl.placeholder="Finding your street…";if(preciseEnough&&navigator.onLine&&window.BBMapPicker)rev=await BBMapPicker.reverse(lat.toFixed(6),lng.toFixed(6));addrEl.placeholder=oldPh;
+  if(gen!==locGen){finish();return}
+  finish();
+  if(zone)applyZone(zone);
+  if(preciseEnough){
+   applyAddress((rev&&rev.short)||(zone?"Near "+zone:""));
+   setPin(+lat.toFixed(6),+lng.toFixed(6),rev&&rev.short?rev.short:"Location detected, but we couldn’t find the street name — please type your street/address below.","auto");
+   toast("Location detected")
+  }else{
+   setPin(null);pinNote("Your location is only approximate"+(zone?" ("+zone+" selected)":"")+". Please type your street/address below.","warn")
+  }
+ },err=>{
+  if(gen!==locGen){finish();return}
+  finish();setPin(null);
+  pinNote(err&&err.code===1?"Location access is off. You can still type your address below.":"Couldn't get your location. Please type your street/address below.","warn")
+ },{enableHighAccuracy:true,timeout:12000,maximumAge:60000});
+}
+/* Automatic trigger: only when permission isn't blocked, and never prompts again once it has been refused. */
+async function autoDetect(){
+ if($("order-type").value==="Pickup"||locAuto||($("pin-lat").value&&!autoOk($("address"))))return;
+ try{if(navigator.permissions){const s=await navigator.permissions.query({name:"geolocation"});if(s.state==="denied"){locAuto=true;pinNote("Location access is off. You can still type your address below.","warn");return}}}catch(_){}
+ detectLocation();
+}
+
+$("pin-gps").addEventListener("click",()=>detectLocation({manual:true}));
+$("order-type").addEventListener("change",()=>{const pickup=$("order-type").value==="Pickup";if($("pin-box"))$("pin-box").hidden=pickup;if(!pickup)autoDetect()});
+/* Checkout opens → saved details fill first, then detection runs only if no saved pin exists */
+$("go-checkout").addEventListener("click",async()=>{locAuto=false;try{await fillSaved()}catch(_){}autoDetect()});
+$("clear-saved").addEventListener("click",()=>{locGen++;locBusy=false;locAuto=false;["zone","address"].forEach(id=>delete $(id).dataset.auto);autoDetect()});

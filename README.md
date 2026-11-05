@@ -38,3 +38,23 @@ Zones are listed in `DELIVERY_ZONES` at the top of `app.js` (shown on the site a
 - The pin is sent in the WhatsApp message as an OpenStreetMap link plus a Google Maps "Navigate" link for the rider, and is remembered on the customer's device with their other saved details.
 - To make the pin optional, set `PIN_REQUIRED=false` near the top of `app.js`. It is skipped automatically when the phone is offline.
 - OpenStreetMap's public servers are for light use. If order volume grows a lot, switch `TILE`/`NOMINATIM` in `map.js` to a paid provider (e.g. MapTiler, Stadia) — only those two constants change.
+
+## Automatic location detection (checkout)
+- Opening checkout (or switching to Delivery) asks the browser for the customer's location once. Skipped if a saved/manual pin exists or permission is blocked; a "Use my current location" button re-runs it any time.
+- The GPS fix is matched to the nearest area in `ZONE_COORDS` (approximate centres, top of the pin section in `app.js`) within `ZONE_MAX_KM`, then fills the zone, the address (reverse geocoded via OpenStreetMap) and the map pin.
+- Detection only fills fields that are empty or were auto-filled; anything the customer typed/picked, or a manually placed pin, is never overwritten. Fixes worse than `PIN_MAX_ACCURACY_M` select the zone only; positions outside Mombasa are ignored.
+
+Credit: "Designed by Manu Creations" (manucreations.co.ke) is in the footer and the mobile ☰ menu; the Buxton Bites logo shows in the mobile home header.
+
+## Terms, Privacy and checkout validation
+- Checkout has a required "I agree to the Terms of Service and Privacy Policy" box (unticked each time checkout opens). The text lives in `#legal-modal` in `index.html` — have it reviewed by a lawyer and edit to match your practice. Links also appear in the footer and mobile ☰ menu.
+- The form uses custom validation (`validateCheckout` in `app.js`): a summary at the top lists everything missing (tap an item to jump to it) and each field shows its own red message, which clears as the customer fixes it.
+
+## Update: no map picker
+The "Open map" picker was removed. The delivery field is now "Street / delivery address" (required). If the customer allows location, the pin is captured silently and the WhatsApp message includes Google Maps and OpenStreetMap links to it. `map.js` now only holds the reverse-geocoding and link helpers.
+
+## Auto street/address
+Detected GPS position is reverse-geocoded (OpenStreetMap Nominatim, `map.js`) into "landmark, street, area" (e.g. "General Post Office, Digo Road, Old Town" or "Baluchi Street, Ganjoni") and fills the address box. Only empty or previously auto-filled addresses are replaced; if the lookup fails it falls back to "Near <area>". Accuracy of street names depends on OpenStreetMap coverage.
+
+## Icons
+All UI icons are [Lucide](https://lucide.dev) (ISC licence), embedded as an inline SVG sprite at the top of `<body>` in `index.html` — no CDN, works offline. Use one with `<svg class="ic"><use href="#i-map-pin"/></svg>` (or `ico("map-pin")` in `app.js`). To add an icon, copy its `<path>`/shapes from lucide.dev into a new `<symbol id="i-NAME" viewBox="0 0 24 24">` in the sprite. Emoji remain only inside the WhatsApp message text, which can't show icons.

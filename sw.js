@@ -1,5 +1,5 @@
 /* Buxton Bites service worker — offline-ready PWA. Bump VERSION on each release. */
-const VERSION="bb-v5";
+const VERSION="bb-v12";
 const CORE_CACHE=`${VERSION}-core`,IMG_CACHE=`${VERSION}-img`;
 const CORE=["./","index.html","styles.css","app.js","map.js","manifest.webmanifest","assets/buxton-bites-logo.png","assets/mpesa-logo.png","assets/whatsapp-logo.png","assets/splash.jpg","assets/icons/icon-192.png","assets/icons/icon-512.png","assets/icons/apple-touch-icon.png"];
 
@@ -15,7 +15,7 @@ self.addEventListener("message",e=>{
 
 async function networkFirst(req,cacheName){
   const cache=await caches.open(cacheName);
-  try{const res=await fetch(req);if(res&&res.ok)cache.put(req,res.clone());return res}
+  try{const res=await fetch(new Request(req.url,{cache:"no-cache",credentials:"same-origin"}));if(res&&res.ok)cache.put(req,res.clone());return res}
   catch(_){const hit=await cache.match(req,{ignoreSearch:true});if(hit)return hit;if(req.mode==="navigate"){const home=await cache.match("index.html")||await cache.match("./");if(home)return home}throw _}
 }
 async function staleWhileRevalidate(req,cacheName){
